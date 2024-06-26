@@ -1,18 +1,21 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
 import React from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 
 const ModalHelpdesk = ({
+  item,
   show,
   handleClose,
   handleSubmit,
   title,
   buttonLabel,
-  namaFakta,
-  setNamaFakta,
+  nama,
+  setNama,
   error,
   setError,
   inputRef,
-  type
+  type,
 }) => {
   return (
     <Modal show={show} onHide={handleClose}>
@@ -23,13 +26,13 @@ const ModalHelpdesk = ({
         {type !== "delete" ? (
           <Form onSubmit={handleSubmit}>
             <Form.Group controlId="formNamaFakta">
-              <Form.Label>Nama Fakta</Form.Label>
+              <Form.Label>{`Nama ${item}`}</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Masukkan nama fakta"
-                value={namaFakta}
+                placeholder={`Masukkan Nama ${item}`}
+                value={nama}
                 ref={inputRef}
-                onChange={(e) => setNamaFakta(e.target.value)}
+                onChange={(e) => setNama(e.target.value)}
                 required
                 style={{ color: "black" }}
               />
@@ -40,7 +43,7 @@ const ModalHelpdesk = ({
             </Button>
           </Form>
         ) : (
-          <p>Apakah Anda yakin ingin menghapus fakta permasalahan ini?</p>
+          <p>{`Apakah Anda yakin ingin menghapus ${item} ini?`}</p>
         )}
       </Modal.Body>
       {type === "delete" && (

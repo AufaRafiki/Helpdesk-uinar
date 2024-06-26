@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
 import { db } from "../../firebaseConfig"; // Import Firebase config
 import {
@@ -10,44 +11,54 @@ import {
   query,
   orderBy,
   where,
+  arrayRemove,
 } from "firebase/firestore";
-import { Modal, Button, Form, Tooltip, OverlayTrigger } from "react-bootstrap";
+import { Button } from "react-bootstrap";
+import ToastHelpdesk from "../components/ToastHelpdesk";
+import ModalHelpdesk from "../components/ModalHelpdesk";
+import TabelContentHelpdesk from "../components/TabelContentHelpdesk";
 import "./styles/Content.css";
 
 const Solusi = () => {
   const [show, setShow] = useState(false);
   const [editShow, setEditShow] = useState(false);
-  const [namaSolusi, setNamaSolusi] = useState("");
-  const [editNamaSolusi, setEditNamaSolusi] = useState("");
+  const [deleteShow, setDeleteShow] = useState(false);
+  const [nama, setNama] = useState("");
+  const [editNama, setEditNama] = useState("");
   const [solusi, setSolusi] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState(null);
-  const [deleteShow, setDeleteShow] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [error, setError] = useState("");
+  const [toastShow, setToastShow] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
   const editTooltipRef = useRef(null);
   const deleteTooltipRef = useRef(null);
   const inputRef = useRef(null);
 
+  const showToast = (message) => {
+    setToastMessage(message);
+    setToastShow(true);
+  };
+
   const handleClose = () => {
     setShow(false);
-    setNamaSolusi("");
+    setEditShow(false);
+    setDeleteShow(false);
+    setNama("");
+    setEditNama("");
     setError("");
   };
+
   const handleShow = () => setShow(true);
 
-  const handleEditClose = () => {
-    setEditShow(false);
-    setEditNamaSolusi("");
-    setError("");
-  };
   const handleEditShow = (id, nama) => {
     setEditId(id);
-    setEditNamaSolusi(nama);
+    setEditNama(nama);
     setEditShow(true);
   };
 
-  const handleDeleteClose = () => setDeleteShow(false);
   const handleDeleteShow = (id) => {
     setDeleteId(id);
     setDeleteShow(true);
@@ -55,7 +66,7 @@ const Solusi = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const trimmedNamaSolusi = namaSolusi.trim();
+    const trimmedNamaSolusi = nama.trim();
     if (!trimmedNamaSolusi) {
       setError("Nama Solusi tidak boleh hanya berisi spasi.");
       return;
@@ -67,18 +78,14 @@ const Solusi = () => {
         createdAt: timestamp,
         updatedAt: timestamp,
       });
-      console.log("Document written with ID: ", docRef.id);
       setSolusi([
         ...solusi,
-        {
-          id: docRef.id,
-          nama_solusi: trimmedNamaSolusi,
-        },
+        { id: docRef.id, nama_solusi: trimmedNamaSolusi },
       ]);
-      setNamaSolusi("");
-      // Refresh rules
+      setNama("");
       fetchRules();
       handleClose();
+      showToast("Solusi berhasil ditambahkan!");
     } catch (e) {
       console.error("Error adding document: ", e);
     }
@@ -86,7 +93,7 @@ const Solusi = () => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const trimmedEditNamaSolusi = editNamaSolusi.trim();
+    const trimmedEditNamaSolusi = editNama.trim();
     if (!trimmedEditNamaSolusi) {
       setError("Nama Solusi tidak boleh hanya berisi spasi.");
       return;
@@ -99,14 +106,15 @@ const Solusi = () => {
         updatedAt: timestamp,
       });
       setSolusi(
-        solusi.map((solusi) =>
-          solusi.id === editId
-            ? { ...solusi, nama_solusi: trimmedEditNamaSolusi }
-            : solusi
+        solusi.map((solusiSatu) =>
+          solusiSatu.id === editId
+            ? { ...solusiSatu, nama_solusi: trimmedEditNamaSolusi }
+            : solusiSatu
         )
       );
-      setEditNamaSolusi("");
-      handleEditClose();
+      setEditNama("");
+      handleClose();
+      showToast("Solusi berhasil diedit!");
     } catch (e) {
       console.error("Error editing document: ", e);
     }
@@ -114,23 +122,22 @@ const Solusi = () => {
 
   const confirmDelete = async () => {
     try {
-      // Fetch all rules with the id_solusi field equal to deleteId
       const rulesQuerySnapshot = await getDocs(
         query(collection(db, "rules"), where("id_solusi", "==", deleteId))
       );
 
-      // Update each rule to remove the deleteId from id_solusi field
       const updatePromises = rulesQuerySnapshot.docs.map((ruleDoc) =>
         updateDoc(ruleDoc.ref, {
-          id_solusi: "", // or "" depending on your schema
+          id_solusi: arrayRemove(deleteId),
         })
       );
       await Promise.all(updatePromises);
 
-      // Delete the solusi document
       await deleteDoc(doc(db, "solusi", deleteId));
-      setSolusi(solusi.filter((solusi) => solusi.id !== deleteId));
-      handleDeleteClose();
+      setSolusi(solusi.filter((solusiSatu) => solusiSatu.id !== deleteId));
+
+      handleClose();
+      showToast(`Solusi berhasil dihapus!`);
     } catch (e) {
       console.error("Error deleting document: ", e);
     }
@@ -163,16 +170,16 @@ const Solusi = () => {
   }, []);
 
   useEffect(() => {
-    if (show) {
+    if (show || editShow) {
       inputRef.current.focus();
     }
-  }, [show]);
+  }, [show, editShow]);
 
   return (
     <div className="solusi">
       <div className="content">
         <div className="header">
-          <span className="material-symbols-outlined">lightbulb</span>
+          <span className="material-symbols-outlined">report_problem</span>
           <h1>Solusi</h1>
         </div>
         {loading ? (
@@ -180,129 +187,64 @@ const Solusi = () => {
         ) : solusi.length === 0 ? (
           <p>Tidak Ada Solusi</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th className="no">No</th>
-                <th className="name">Nama Solusi</th>
-                <th className="aksi">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {solusi.map((solusi, i) => (
-                <tr key={solusi.id}>
-                  <td className="no">{i + 1}</td>
-                  <td className="name">{solusi.nama_solusi}</td>
-                  <td className="aksi">
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip id={`tooltip-top-edit`}>Edit</Tooltip>}
-                      ref={editTooltipRef}
-                    >
-                      <Button
-                        variant="warning"
-                        onClick={() =>
-                          handleEditShow(solusi.id, solusi.nama_solusi)
-                        }
-                        className="me-2"
-                      >
-                        <span className="material-symbols-outlined">edit</span>
-                      </Button>
-                    </OverlayTrigger>
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-top-delete`}>Delete</Tooltip>
-                      }
-                      ref={deleteTooltipRef}
-                    >
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDeleteShow(solusi.id)}
-                      >
-                        <span className="material-symbols-outlined">
-                          delete
-                        </span>
-                      </Button>
-                    </OverlayTrigger>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <TabelContentHelpdesk
+            item="Solusi"
+            daftarData={solusi}
+            handleEditShow={handleEditShow}
+            handleDeleteShow={handleDeleteShow}
+          />
         )}
         <Button variant="primary" onClick={handleShow} className="add-button">
           Tambah Solusi
         </Button>
       </div>
 
-      <Modal show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Tambah Solusi</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group controlId="formNamaFakta">
-              <Form.Label>Nama Solusi</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Masukkan nama solusi"
-                value={namaSolusi}
-                onChange={(e) => setNamaSolusi(e.target.value)}
-                ref={inputRef} // Tambahkan ref untuk input
-                required
-                style={{ color: "black" }} // Make the text color black
-              />
-              {error && <p className="text-danger mt-2">{error}</p>}
-            </Form.Group>
-            <Button variant="primary" type="submit" className="mt-3">
-              Simpan
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
+      <ModalHelpdesk
+        item="Solusi"
+        show={show}
+        handleClose={handleClose}
+        handleSubmit={handleSubmit}
+        title="Tambah Solusi"
+        buttonLabel="Simpan"
+        nama={nama}
+        setNama={setNama}
+        error={error}
+        setError={setError}
+        inputRef={inputRef}
+        type="add"
+      />
 
-      <Modal show={editShow} onHide={handleEditClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Solusi</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleEditSubmit}>
-            <Form.Group controlId="formEditNamaFakta">
-              <Form.Label>Nama Solusi</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Masukkan nama solusi"
-                value={editNamaSolusi}
-                onChange={(e) => setEditNamaSolusi(e.target.value)}
-                required
-                style={{ color: "black" }} // Make the text color black
-              />
-              {error && <p className="text-danger mt-2">{error}</p>}
-            </Form.Group>
-            <Button variant="primary" type="submit" className="mt-3">
-              Simpan
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
+      <ModalHelpdesk
+        item="Solusi"
+        show={editShow}
+        handleClose={handleClose}
+        handleSubmit={handleEditSubmit}
+        title="Edit Solusi"
+        buttonLabel="Simpan"
+        nama={editNama}
+        setNama={setEditNama}
+        error={error}
+        setError={setError}
+        inputRef={inputRef}
+        type="edit"
+      />
 
-      <Modal show={deleteShow} onHide={handleDeleteClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Konfirmasi Hapus</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Apakah Anda yakin ingin menghapus solusi ini?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleDeleteClose}>
-            Batal
-          </Button>
-          <Button variant="danger" onClick={confirmDelete}>
-            Hapus
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ModalHelpdesk
+        item="Solusi"
+        show={deleteShow}
+        handleClose={handleClose}
+        handleSubmit={confirmDelete}
+        title="Konfirmasi Hapus"
+        buttonLabel="Hapus"
+        type="delete"
+      />
+
+      <ToastHelpdesk
+        show={toastShow}
+        message={toastMessage}
+        duration={3000}
+        onClose={() => setToastShow(false)}
+      />
     </div>
   );
 };

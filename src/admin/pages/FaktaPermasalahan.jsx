@@ -13,17 +13,18 @@ import {
   where,
   arrayRemove,
 } from "firebase/firestore";
-import { Button, Tooltip, OverlayTrigger } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import ToastHelpdesk from "../components/ToastHelpdesk";
 import ModalHelpdesk from "../components/ModalHelpdesk";
+import TabelContentHelpdesk from "../components/TabelContentHelpdesk";
 import "./styles/Content.css";
 
 const FaktaPermasalahan = () => {
   const [show, setShow] = useState(false);
   const [editShow, setEditShow] = useState(false);
   const [deleteShow, setDeleteShow] = useState(false);
-  const [namaFakta, setNamaFakta] = useState("");
-  const [editNamaFakta, setEditNamaFakta] = useState("");
+  const [nama, setNama] = useState("");
+  const [editNama, setEditNama] = useState("");
   const [faktaPermasalahan, setFaktaPermasalahan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState(null);
@@ -45,8 +46,8 @@ const FaktaPermasalahan = () => {
     setShow(false);
     setEditShow(false);
     setDeleteShow(false);
-    setNamaFakta("");
-    setEditNamaFakta("");
+    setNama("");
+    setEditNama("");
     setError("");
   };
 
@@ -54,7 +55,7 @@ const FaktaPermasalahan = () => {
 
   const handleEditShow = (id, nama) => {
     setEditId(id);
-    setEditNamaFakta(nama);
+    setEditNama(nama);
     setEditShow(true);
   };
 
@@ -65,7 +66,7 @@ const FaktaPermasalahan = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const trimmedNamaFakta = namaFakta.trim();
+    const trimmedNamaFakta = nama.trim();
     if (!trimmedNamaFakta) {
       setError("Nama Fakta tidak boleh hanya berisi spasi.");
       return;
@@ -81,7 +82,7 @@ const FaktaPermasalahan = () => {
         ...faktaPermasalahan,
         { id: docRef.id, nama_fakta: trimmedNamaFakta },
       ]);
-      setNamaFakta("");
+      setNama("");
       fetchRules();
       handleClose();
       showToast("Fakta berhasil ditambahkan!");
@@ -92,7 +93,7 @@ const FaktaPermasalahan = () => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const trimmedEditNamaFakta = editNamaFakta.trim();
+    const trimmedEditNamaFakta = editNama.trim();
     if (!trimmedEditNamaFakta) {
       setError("Nama Fakta tidak boleh hanya berisi spasi.");
       return;
@@ -111,7 +112,7 @@ const FaktaPermasalahan = () => {
             : fakta
         )
       );
-      setEditNamaFakta("");
+      setEditNama("");
       handleClose();
       showToast("Fakta berhasil diedit!");
     } catch (e) {
@@ -191,56 +192,12 @@ const FaktaPermasalahan = () => {
         ) : faktaPermasalahan.length === 0 ? (
           <p>Tidak Ada Fakta Permasalahan</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th className="no">No</th>
-                <th className="name">Nama Fakta</th>
-                <th className="aksi">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {faktaPermasalahan.map((fakta, i) => (
-                <tr key={fakta.id}>
-                  <td className="no">{i + 1}</td>
-                  <td className="name">{fakta.nama_fakta}</td>
-                  <td className="aksi">
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip id={`tooltip-top-edit`}>Edit</Tooltip>}
-                      ref={editTooltipRef}
-                    >
-                      <Button
-                        variant="warning"
-                        onClick={() =>
-                          handleEditShow(fakta.id, fakta.nama_fakta)
-                        }
-                        className="me-2"
-                      >
-                        <span className="material-symbols-outlined">edit</span>
-                      </Button>
-                    </OverlayTrigger>
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-top-delete`}>Delete</Tooltip>
-                      }
-                      ref={deleteTooltipRef}
-                    >
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDeleteShow(fakta.id)}
-                      >
-                        <span className="material-symbols-outlined">
-                          delete
-                        </span>
-                      </Button>
-                    </OverlayTrigger>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <TabelContentHelpdesk
+            item="Fakta"
+            daftarData={faktaPermasalahan}
+            handleEditShow={handleEditShow}
+            handleDeleteShow={handleDeleteShow}
+          />
         )}
         <Button variant="primary" onClick={handleShow} className="add-button">
           Tambah Fakta Permasalahan
@@ -248,13 +205,14 @@ const FaktaPermasalahan = () => {
       </div>
 
       <ModalHelpdesk
+        item="Fakta"
         show={show}
         handleClose={handleClose}
         handleSubmit={handleSubmit}
         title="Tambah Fakta Permasalahan"
         buttonLabel="Simpan"
-        namaFakta={namaFakta}
-        setNamaFakta={setNamaFakta}
+        nama={nama}
+        setNama={setNama}
         error={error}
         setError={setError}
         inputRef={inputRef}
@@ -262,13 +220,14 @@ const FaktaPermasalahan = () => {
       />
 
       <ModalHelpdesk
+        item="Fakta"
         show={editShow}
         handleClose={handleClose}
         handleSubmit={handleEditSubmit}
         title="Edit Fakta Permasalahan"
         buttonLabel="Simpan"
-        namaFakta={editNamaFakta}
-        setNamaFakta={setEditNamaFakta}
+        nama={editNama}
+        setNama={setEditNama}
         error={error}
         setError={setError}
         inputRef={inputRef}
@@ -276,6 +235,7 @@ const FaktaPermasalahan = () => {
       />
 
       <ModalHelpdesk
+        item="Fakta"
         show={deleteShow}
         handleClose={handleClose}
         handleSubmit={confirmDelete}

@@ -404,7 +404,7 @@ const Dashboard = () => {
           <Modal.Title>Konfirmasi Hapus</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Apakah Anda yakin ingin menghapus kesimpulan ini?</p>
+          <p>Apakah Anda yakin ingin menghapus aturan ini?</p>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleDeleteClose}>
