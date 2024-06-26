@@ -1,0 +1,31 @@
+/* src/components/styles/Layout.css */
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.sidebar {
+  flex: 0 0 250px; /* Sidebar width */
+  height: 100%;
+  position: fixed; /* Fixed position */
+  top: 0;
+  left: 0;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+  border: none;
+}
+
+.sidebar.collapsed + .content {
+  margin-left: 85px; /* Adjust margin when sidebar is collapsed */
+}
+
+.sidebar + .content {
+  margin-left: 268px; /* Adjust margin when sidebar is collapsed */
+}

@@ -1,0 +1,131 @@
+/* src/components/styles/Sidebar.css */
+.sidebar {
+  height: 100vh;
+  background-color: #121212;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  padding: 20px;
+  justify-content: space-between;
+}
+
+.sidebar.collapsed {
+  width: 85px;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  width: 100%;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  color: white;
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 4px;
+  transition: background 0.3s;
+  position: relative;
+}
+
+.menu-item:hover {
+  background-color: #41415a;
+}
+
+.menu-item .material-symbols-outlined {
+  font-size: 24px;
+  margin-right: 16px;
+}
+
+.menu-item .menu-text {
+  flex-grow: 1;
+  white-space: nowrap;
+}
+
+button .menu-text {
+  text-align: center;
+}
+
+.sidebar.collapsed .menu-item .menu-text {
+  display: none;
+}
+
+.toggle-btn .material-symbols-outlined {
+  margin-right: 16px;
+}
+
+.menu.notification {
+  margin-top: auto;
+}
+
+.menu.logout {
+  margin-top: 10px;
+}
+
+.logout button:hover {
+  background-color: red;
+  border: none;
+}
+
+.menu-item:hover {
+  text-decoration: none;
+}
+
+.menu-item:hover .material-symbols-outlined,
+.menu-item:hover .menu-text {
+  text-decoration: none;
+}
+
+.menu-item.active {
+  background-color: #41415a;
+  color: #fff;
+}
+
+.position-absolute {
+  position: absolute;
+}
+
+.top-0 {
+  top: 0;
+}
+
+.start-100 {
+  left: 100%;
+}
+
+.translate-middle {
+  transform: translate(-50%, -50%);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+}

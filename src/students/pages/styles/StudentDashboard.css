@@ -1,0 +1,244 @@
+body,
+html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* background-color: #2c2c38; */
+  font-family: Arial, sans-serif;
+  color: #ffffff;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.main {
+  display: flex;
+  border: 1px solid black;
+  width: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-x: hidden; /* Tambahkan ini jika masih ada overflow */
+}
+
+.navbar-custom {
+  width: 100vw;
+  background-color: #121212 !important;
+  padding: 10px 0;
+}
+
+.ms-auto {
+  margin-right: 15px;
+}
+
+.help-section {
+  background-color: #121212;
+  color: white;
+  padding: 60px 0;
+  /* width: 100%; */
+  overflow-x: hidden; /* Tambahkan ini jika diperlukan */
+}
+
+.text-center {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.search-bar {
+  border: 1px solid #2c2c38;
+  position: relative;
+  border-radius: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.search-bar:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.search-icon-container {
+  background-color: #121212;
+  border: none;
+  border-top-left-radius: 30px;
+  border-bottom-left-radius: 30px;
+  padding: 0 15px;
+}
+
+.search-icon-container .search-icon {
+  color: #007bff;
+}
+
+.search-input {
+  background-color: #2c2c38;
+  color: white;
+  border: none;
+  border-top-right-radius: 30px;
+  border-bottom-right-radius: 30px;
+}
+
+.button-ask {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 30px;
+  margin-left: -1px;
+  padding: 0 20px;
+  transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.button-ask:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.help-section h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+.nav-link {
+  color: #b0b0b0 !important;
+}
+
+.nav-link:hover {
+  color: #ffffff !important;
+}
+
+.nav-link.active {
+  color: #007bff !important;
+  border-bottom: 2px solid #007bff;
+}
+
+.facts-list {
+  margin-top: 20px;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fact-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #121212;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 20px;
+  margin: 10px 0;
+  width: 80%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.fact-item:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.fact-text {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.fact-checkbox {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+}
+
+.fact-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  background-color: #2c2c38;
+  border: 2px solid #007bff;
+  border-radius: 5px;
+}
+
+.fact-item.selected {
+  background-color: #007bff;
+  color: white;
+}
+
+.find-solution-button {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 30px;
+  padding: 10px 20px;
+  margin: 20px 0;
+  transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.find-solution-button:hover,
+.new-problem-button:hover {
+  transform: translateY(-2px);
+}
+
+.find-solution-button:hover {
+  background-color: #0056b3;
+}
+
+.solution-section {
+  width: 80%;
+  margin: 20px auto;
+  padding: 30px;
+  padding-bottom: 1px;
+  background-color: #121212;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.solusi {
+  margin-top: 40px;
+}
+
+.solution-item {
+  margin-bottom: 2rem; /* Add spacing between solutions */
+  padding: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.solution-item h3 {
+  margin-bottom: 1rem;
+}
+
+.solution-item h4 {
+  color: #0056b3;
+}
+
+.solution-item li a {
+  color: #ffffff;
+}
+
+.solution-item hr {
+  margin: 1.5rem 0;
+}
+
+.issues-section {
+  border: 1px solid black;
+  width: 100vw;
+  background-color: #2c2c38;
+}
+
+.clear-search-button {
+  background-color: transparent;
+  color: #0056b3;
+}
+
+.highlight {
+  animation: highlight-animation 3s ease;
+}
+
+@keyframes highlight-animation {
+  0% {
+    margin-top: -10px;
+    background-color: rgba(0, 86, 179, 0.2);
+  }
+  100% {
+    border: none;
+    background-color: transparent;
+  }
+}

@@ -1,0 +1,28 @@
+.about-container {
+  padding: 2rem;
+}
+
+.about-card {
+  background-color: #121212;
+  margin: 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.about-card .card-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.about-card .card-text {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.about-card ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.about-card ul li {
+  margin-bottom: 0.5rem;
+}

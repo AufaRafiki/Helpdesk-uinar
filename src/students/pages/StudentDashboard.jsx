@@ -1,0 +1,460 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable react/prop-types */
+import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faLock } from "@fortawesome/free-solid-svg-icons";
+import {
+  Navbar,
+  Nav,
+  Container,
+  Form,
+  InputGroup,
+  Button,
+  Spinner,
+  Modal,
+} from "react-bootstrap";
+import { Search } from "react-bootstrap-icons";
+import {
+  query,
+  orderBy,
+  collection,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import useAuth from "../../auth.js";
+import { db } from "../../firebaseConfig";
+import "./styles/StudentDashboard.css";
+import { useCookies } from "react-cookie";
+import { useNavigate } from "react-router-dom";
+import StudentNavbar from "./StudentNavbar.jsx";
+
+// HelpSection Component
+const HelpSection = ({ onSearch }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    onSearch(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    onSearch("");
+  };
+
+  return (
+    <div className="help-section">
+      <Container className="text-center">
+        <h1>How Can I Help You?</h1>
+        <InputGroup className="search-bar w-75 mx-auto">
+          <InputGroup.Text className="search-icon-container">
+            <Search className="search-icon" />
+          </InputGroup.Text>
+          <Form.Control
+            type="text"
+            placeholder="Search your issues here..."
+            className="search-input"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+          {searchTerm && (
+            <Button
+              variant="primary"
+              className="clear-search-button button-ask"
+              onClick={handleClearSearch}
+            >
+              X
+            </Button>
+          )}
+        </InputGroup>
+      </Container>
+    </div>
+  );
+};
+
+const SubmitIssueForm = ({ show, handleClose }) => {
+  const [issueDescription, setIssueDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { currentUser } = useAuth(); // Mendapatkan pengguna saat ini dari konteks auth
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, "pengajuan"), {
+        description: issueDescription,
+        createdAt: serverTimestamp(),
+        handledAt: null,
+        pengusul: currentUser ? currentUser.uid : null,
+        status: null,
+        isRead: false,
+      });
+      setIssueDescription("");
+      handleClose();
+    } catch (error) {
+      console.error("Error submitting issue: ", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal show={show} onHide={handleClose}>
+      <Modal.Header closeButton>
+        <Modal.Title>Ajukan Masalah Baru</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form>
+          <Form.Group controlId="issueDescription">
+            <Form.Label>Deskripsi Masalah</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={issueDescription}
+              onChange={(e) => setIssueDescription(e.target.value)}
+            />
+          </Form.Group>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={handleClose}>
+          Tutup
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Mengirim..." : "Kirim"}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+};
+
+const IssuesSection = ({ searchTerm }) => {
+  const [facts, setFacts] = useState([]);
+  const [filteredFacts, setFilteredFacts] = useState([]);
+  const [selectedFacts, setSelectedFacts] = useState([]);
+  const [solutionData, setSolutionData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [unmatchedFacts, setUnmatchedFacts] = useState([]);
+  const [partialSolutions, setPartialSolutions] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+
+  const handleShowModal = () => setShowModal(true);
+  const handleCloseModal = () => setShowModal(false);
+
+  // Tambahkan fungsi ini dalam komponen IssuesSection
+  const highlightFact = (factId) => {
+    const factElement = document.getElementById(factId);
+    if (factElement) {
+      factElement.classList.add("highlight");
+      setTimeout(() => {
+        factElement.classList.remove("highlight");
+      }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    const fetchFacts = async () => {
+      const factsQuery = query(
+        collection(db, "fakta-permasalahan"),
+        orderBy("createdAt", "asc")
+      );
+      const querySnapshot = await getDocs(factsQuery);
+      const factsData = [];
+      querySnapshot.forEach((doc) => {
+        factsData.push({ ...doc.data(), id: doc.id });
+      });
+      setFacts(factsData);
+      setFilteredFacts(factsData);
+    };
+    fetchFacts();
+  }, []);
+
+  useEffect(() => {
+    if (searchTerm) {
+      const filtered = facts.filter((fact) =>
+        fact.nama_fakta.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredFacts(filtered);
+    } else {
+      setFilteredFacts(facts);
+    }
+  }, [searchTerm, facts]);
+
+  const handleCheckboxChange = (id) => {
+    setSelectedFacts((prev) =>
+      prev.includes(id) ? prev.filter((factId) => factId !== id) : [...prev, id]
+    );
+  };
+
+  const handleCardClick = (id) => {
+    handleCheckboxChange(id);
+  };
+
+  const handleFindSolution = async () => {
+    setIsLoading(true);
+    const rulesQuery = query(collection(db, "rules"));
+    const querySnapshot = await getDocs(rulesQuery);
+    const rulesData = [];
+    querySnapshot.forEach((doc) => {
+      rulesData.push({ ...doc.data(), id: doc.id });
+    });
+
+    const solutionsFound = [];
+    const matchedFactIds = new Set();
+
+    for (let rule of rulesData) {
+      const { id_fakta, id_kesimpulan, id_solusi } = rule;
+
+      if (id_fakta.every((fact) => selectedFacts.includes(fact))) {
+        const daftarFakta = [];
+        const faktaSnapshot = await getDocs(
+          collection(db, "fakta-permasalahan")
+        );
+        id_fakta.forEach((fakta) => {
+          faktaSnapshot.forEach((doc) => {
+            if (doc.id === fakta) {
+              daftarFakta.push(doc.data().nama_fakta);
+              matchedFactIds.add(fakta);
+            }
+          });
+        });
+
+        let conclusionText = "";
+        const conclusionSnapshot = await getDocs(collection(db, "kesimpulan"));
+        conclusionSnapshot.forEach((doc) => {
+          if (doc.id === id_kesimpulan) {
+            conclusionText = doc.data().nama_kesimpulan;
+          }
+        });
+
+        let solutionText = "";
+        const solutionSnapshot = await getDocs(collection(db, "solusi"));
+        solutionSnapshot.forEach((doc) => {
+          if (doc.id === id_solusi) {
+            solutionText = doc.data().nama_solusi;
+          }
+        });
+
+        solutionsFound.push({
+          facts: daftarFakta,
+          conclusion: conclusionText,
+          solution: solutionText,
+        });
+      }
+    }
+
+    // Identify unmatched facts
+    const unmatchedFactsList = selectedFacts.filter(
+      (factId) => !matchedFactIds.has(factId)
+    );
+
+    // Finding partial solutions for unmatched facts
+    const partialSolutionsFound = [];
+    for (let rule of rulesData) {
+      const { id_fakta, id_kesimpulan, id_solusi } = rule;
+      const intersectingFacts = id_fakta.filter((fact) =>
+        unmatchedFactsList.includes(fact)
+      );
+
+      if (intersectingFacts.length > 0) {
+        const daftarFaktaUnmatched = [];
+        const daftarFaktaMatched = [];
+        const faktaSnapshot = await getDocs(
+          collection(db, "fakta-permasalahan")
+        );
+        id_fakta.forEach((fakta) => {
+          faktaSnapshot.forEach((doc) => {
+            if (doc.id === fakta) {
+              if (unmatchedFactsList.includes(fakta)) {
+                daftarFaktaUnmatched.push(doc.data().nama_fakta);
+              } else {
+                daftarFaktaMatched.push({
+                  nama: doc.data().nama_fakta,
+                  id: doc.id,
+                });
+              }
+            }
+          });
+        });
+
+        let conclusionText = "";
+        const conclusionSnapshot = await getDocs(collection(db, "kesimpulan"));
+        conclusionSnapshot.forEach((doc) => {
+          if (doc.id === id_kesimpulan) {
+            conclusionText = doc.data().nama_kesimpulan;
+          }
+        });
+
+        let solutionText = "";
+        const solutionSnapshot = await getDocs(collection(db, "solusi"));
+        solutionSnapshot.forEach((doc) => {
+          if (doc.id === id_solusi) {
+            solutionText = doc.data().nama_solusi;
+          }
+        });
+
+        partialSolutionsFound.push({
+          factsMatched: daftarFaktaMatched,
+          factsUnmatched: daftarFaktaUnmatched,
+          conclusion: conclusionText,
+          solution: solutionText,
+        });
+      }
+    }
+
+    setSolutionData(solutionsFound);
+    setUnmatchedFacts(unmatchedFactsList);
+    setPartialSolutions(partialSolutionsFound);
+    console.log(partialSolutions);
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="issues-section">
+      <div className="facts-list mt-5">
+        <h4>Or Select Your Issues Below</h4>
+        {filteredFacts.length > 0 ? (
+          filteredFacts.map((fact) => (
+            <div
+              key={fact.id}
+              id={fact.id}
+              className={`fact-item ${
+                selectedFacts.includes(fact.id) ? "selected" : ""
+              }`}
+              onClick={() => handleCardClick(fact.id)}
+            >
+              <div className="fact-text">{fact.nama_fakta}</div>
+              <Form.Check
+                type="checkbox"
+                checked={selectedFacts.includes(fact.id)}
+                onChange={() => handleCheckboxChange(fact.id)}
+                className="fact-checkbox"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          ))
+        ) : (
+          <div className="no-facts-message">
+            <p>No facts found matching the search criteria.</p>
+          </div>
+        )}
+        <Button
+          variant="primary"
+          className={`find-solution-button ${
+            selectedFacts.length < 1 ? "disabled" : ""
+          }`}
+          onClick={handleFindSolution}
+        >
+          {isLoading ? (
+            <Spinner animation="border" size="sm" />
+          ) : selectedFacts < 1 ? (
+            <>
+              <FontAwesomeIcon icon={faLock} /> Carikan Solusi
+            </>
+          ) : (
+            "Carikan Solusi"
+          )}
+        </Button>
+        {(solutionData.length > 0 || partialSolutions.length > 0) && (
+          <div className="solution-section mt-5">
+            {solutionData.map((solution, index) => (
+              <div key={index} className="solution-item">
+                <h3>Penyelesaian {index + 1}</h3>
+                <hr />
+                <div>
+                  <h4>Fakta-fakta Permasalahan:</h4>
+                  <ul>
+                    {solution.facts.map((fact, idx) => (
+                      <li key={idx}>{fact}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4>Kesimpulan Fix:</h4>
+                  <p>{solution.conclusion}</p>
+                </div>
+                <div>
+                  <h4>Solusi Fix:</h4>
+                  <p>{solution.solution}</p>
+                </div>
+              </div>
+            ))}
+
+            {partialSolutions.map((solution, index) => (
+              <div key={index} className="solution-item">
+                <h3>Penyelesaian {index + solutionData.length + 1}</h3>
+                <hr />
+                <div>
+                  <h4>Fakta-fakta Permasalahan:</h4>
+                  <ul>
+                    {solution.factsUnmatched.map((fact, idx) => (
+                      <li key={idx}>{fact}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4>Kemungkinan Kesimpulan:</h4>
+                  <p>{solution.conclusion}</p>
+                </div>
+                <div>
+                  <h4>Kemungkinan Solusi:</h4>
+                  <p>{solution.solution}</p>
+                </div>
+                <div>
+                  <h4>
+                    Cek lagi fakta Permasalahan Berikut Agar Kesimpulan dan
+                    Solusinya Menjadi Fix:
+                  </h4>
+                  <ul>
+                    {solution.factsMatched.map((fact, idx) => (
+                      <li key={idx}>
+                        <a
+                          href={`#${fact.id}`}
+                          onClick={() => highlightFact(fact.id)}
+                        >
+                          {fact.nama}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <Button
+          variant="link"
+          className="new-problem-button"
+          onClick={handleShowModal}
+        >
+          Can't find your issue? Submit a new problem.
+        </Button>
+        <SubmitIssueForm show={showModal} handleClose={handleCloseModal} />
+      </div>
+    </div>
+  );
+};
+
+// StudentDashboard Component
+const StudentDashboard = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+
+  return (
+    <div className="main">
+      <StudentNavbar activeLink="Dashboard" />
+      <HelpSection onSearch={handleSearch} />
+      <IssuesSection searchTerm={searchTerm} />
+    </div>
+  );
+};
+
+export default StudentDashboard;
