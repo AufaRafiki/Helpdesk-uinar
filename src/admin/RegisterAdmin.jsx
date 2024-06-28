@@ -1,14 +1,14 @@
-// src/components/Register.jsx
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { Link } from "react-router-dom";
-import logo from "../../assets/logo-uinar.png";
+import LogoHeader from "../components/LogoHeader";
+import PasswordField from "../components/PasswordField";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "../../admin/pages/styles/Login.css";
+import "./styles/Login.css";
 import { addDoc, collection } from "firebase/firestore";
-import { auth, db } from "../../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
 
-const RegisterMahasiswa = () => {
+const RegisterAdmin = () => {
   const [nama, setNama] = useState("");
   const [npm, setNpm] = useState("");
   const [password, setPassword] = useState("");
@@ -18,11 +18,11 @@ const RegisterMahasiswa = () => {
 
   const handleRegister = (e) => {
     e.preventDefault();
-    createUserWithEmailAndPassword(auth, `${npm}@mhs.com`, password)
+    createUserWithEmailAndPassword(auth, `${npm}@admin.com`, password)
       .then((userCredential) => {
         const user = userCredential.user;
         // Simpan data pengguna ke Firestore
-        addDoc(collection(db, "users"), {
+        addDoc(collection(db, "admin"), {
           uid: user.uid,
           nama: nama,
           npm: npm,
@@ -41,30 +41,18 @@ const RegisterMahasiswa = () => {
       });
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword); // Mengubah nilai state showPassword menjadi kebalikannya
-  };
-
   return (
     <div className="full-body">
       <div className="container">
-        <div className="judul">
-          <img
-            src={logo}
-            alt="Logo UIN Ar-Raniry"
-            title="Logo UIN Ar-Raniry"
-            width="200px"
-          />
-          <h1>Helpdesk UIN Ar-Raniry</h1>
-        </div>
+        <LogoHeader role="Admin" />
         <div className="card p-5 shadow-sm" style={{ width: "100%" }}>
-          <h2 className="card-title text-center mb-4">Register</h2>
+          <h2 className="card-title text-center mb-4">Register Admin</h2>
           {success && (
             <div className="alert alert-success" role="alert">
               Registration successful. Please{" "}
-              <a href="/login" className="alert-link">
+              <Link to="/admin/login" className="alert-link">
                 login
-              </a>{" "}
+              </Link>{" "}
               to continue
             </div>
           )}
@@ -89,26 +77,10 @@ const RegisterMahasiswa = () => {
               />
             </div>
             <div className="form-group">
-              <div className="input-group">
-                {" "}
-                {/* Tambahkan input group untuk menampilkan tombol mata */}
-                <input
-                  type={showPassword ? "text" : "password"} // Gunakan ternary operator untuk menentukan tipe input
-                  className="form-control bg-transparent"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  className="btn btn-outline-secondary" // Tambahkan kelas untuk styling tombol mata
-                  type="button" // Tentukan tipe button agar tidak melakukan submit form
-                  onClick={togglePasswordVisibility} // Panggil fungsi ketika tombol mata ditekan
-                >
-                  <span className="material-symbols-outlined">
-                    {showPassword ? "visibility_off" : "visibility"}
-                  </span>
-                </button>
-              </div>
+              <PasswordField
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
             <button type="submit" className="btn btn-primary btn-block mt-3">
               Register
@@ -123,4 +95,4 @@ const RegisterMahasiswa = () => {
   );
 };
 
-export default RegisterMahasiswa;
+export default RegisterAdmin;

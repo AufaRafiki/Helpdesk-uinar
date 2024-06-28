@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/no-unescaped-entities */
 import React, { useState } from "react";
-import { auth } from "../../firebaseConfig";
+import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { useCookies } from "react-cookie";
@@ -85,7 +85,7 @@ const Login = () => {
                 </button>
               </div>
               <p>
-                <a href="#">Forgot the password?</a>
+                <a href="#">Forgot password?</a>
               </p>
             </div>
             <button type="submit" className="btn btn-primary btn-block mt-3">

@@ -1,20 +1,20 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/no-unescaped-entities */
 import React, { useState } from "react";
-import { auth } from "../../firebaseConfig";
+import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
-import { useCookies } from "react-cookie"; // Import react-cookie
-import logo1 from "../../assets/logo-uinar.png";
+import { useCookies } from "react-cookie";
+import LogoHeader from "../components/LogoHeader";
+import PasswordField from "../components/PasswordField";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "../../admin/pages/styles/Login.css";
+import "../admin/styles/Login.css";
+import ModalWarning from "../components/ModalWarning";
 
 const LoginMahasiswa = () => {
   const [npm, setNpm] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [cookies, setCookie] = useCookies(["user"]);
+  const [showModal, setShowModal] = useState(false); // State for modal visibility
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
@@ -35,23 +35,13 @@ const LoginMahasiswa = () => {
       });
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const handleShowModal = () => setShowModal(true); // Function to show modal
+  const handleCloseModal = () => setShowModal(false); // Function to close modal
 
   return (
     <div className="full-body">
       <div className="container">
-        <div className="judul">
-          <img
-            src={logo1}
-            alt="Logo UIN Ar-Raniry"
-            title="Logo UIN Ar-Raniry"
-            width="200px"
-          />
-          <h1>Helpdesk UIN Ar-Raniry</h1>
-          <h1>Student</h1>
-        </div>
+        <LogoHeader role="Student" />
         <div className="card p-5 shadow-sm" style={{ width: "100%" }}>
           <h2 className="card-title text-center mb-4">Login</h2>
           {error && <p className="text-danger">{error}</p>}
@@ -66,26 +56,14 @@ const LoginMahasiswa = () => {
               />
             </div>
             <div className="form-group">
-              <div className="input-group">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="form-control bg-transparent"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  className="btn btn-outline-secondary"
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                >
-                  <span className="material-symbols-outlined">
-                    {showPassword ? "visibility_off" : "visibility"}
-                  </span>
-                </button>
-              </div>
+              <PasswordField
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
               <p>
-                <a href="#">Forgot the password?</a>
+                <a href="#" onClick={handleShowModal}>
+                  Forgot password?
+                </a>
               </p>
             </div>
             <button type="submit" className="btn btn-primary btn-block mt-3">
@@ -97,6 +75,13 @@ const LoginMahasiswa = () => {
           </p>
         </div>
       </div>
+
+      <ModalWarning
+        show={showModal}
+        handleClose={handleCloseModal}
+        title="Forgot Password"
+        message="Please contact the campus operator to reset your password."
+      />
     </div>
   );
 };

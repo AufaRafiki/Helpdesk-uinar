@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock } from "@fortawesome/free-solid-svg-icons";
+import { useCookies } from "react-cookie";
 import {
   Navbar,
   Nav,
@@ -23,12 +24,11 @@ import {
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import useAuth from "../../auth.js";
-import { db } from "../../firebaseConfig";
+import useAuth from "../auth.js";
+import { db } from "../firebaseConfig.js";
 import "./styles/StudentDashboard.css";
-import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
-import StudentNavbar from "./StudentNavbar.jsx";
+import StudentNavbar from "../components/StudentNavbar.jsx";
 
 // HelpSection Component
 const HelpSection = ({ onSearch }) => {
@@ -77,16 +77,17 @@ const HelpSection = ({ onSearch }) => {
 const SubmitIssueForm = ({ show, handleClose }) => {
   const [issueDescription, setIssueDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { currentUser } = useAuth(); // Mendapatkan pengguna saat ini dari konteks auth
+  const [cookies] = useCookies(["user"]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      console.log(cookies);
       await addDoc(collection(db, "pengajuan"), {
         description: issueDescription,
         createdAt: serverTimestamp(),
         handledAt: null,
-        pengusul: currentUser ? currentUser.uid : null,
+        pengusul: cookies.user ? cookies.user.uid : null,
         status: null,
         isRead: false,
       });
@@ -102,12 +103,12 @@ const SubmitIssueForm = ({ show, handleClose }) => {
   return (
     <Modal show={show} onHide={handleClose}>
       <Modal.Header closeButton>
-        <Modal.Title>Ajukan Masalah Baru</Modal.Title>
+        <Modal.Title>Submit New Issue</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
           <Form.Group controlId="issueDescription">
-            <Form.Label>Deskripsi Masalah</Form.Label>
+            <Form.Label>Problem Description</Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
@@ -119,20 +120,19 @@ const SubmitIssueForm = ({ show, handleClose }) => {
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={handleClose}>
-          Tutup
+          Close
         </Button>
         <Button
           variant="primary"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Mengirim..." : "Kirim"}
+          {isSubmitting ? "Sending..." : "Send"}
         </Button>
       </Modal.Footer>
     </Modal>
   );
 };
-
 const IssuesSection = ({ searchTerm }) => {
   const [facts, setFacts] = useState([]);
   const [filteredFacts, setFilteredFacts] = useState([]);
@@ -354,20 +354,20 @@ const IssuesSection = ({ searchTerm }) => {
             <Spinner animation="border" size="sm" />
           ) : selectedFacts < 1 ? (
             <>
-              <FontAwesomeIcon icon={faLock} /> Carikan Solusi
+              <FontAwesomeIcon icon={faLock} /> Find the Solution
             </>
           ) : (
-            "Carikan Solusi"
+            "Find the Solution"
           )}
         </Button>
         {(solutionData.length > 0 || partialSolutions.length > 0) && (
           <div className="solution-section mt-5">
             {solutionData.map((solution, index) => (
               <div key={index} className="solution-item">
-                <h3>Penyelesaian {index + 1}</h3>
+                <h3>Completion {index + 1}</h3>
                 <hr />
                 <div>
-                  <h4>Fakta-fakta Permasalahan:</h4>
+                  <h4>Facts of the Problem:</h4>
                   <ul>
                     {solution.facts.map((fact, idx) => (
                       <li key={idx}>{fact}</li>
@@ -375,11 +375,11 @@ const IssuesSection = ({ searchTerm }) => {
                   </ul>
                 </div>
                 <div>
-                  <h4>Kesimpulan Fix:</h4>
+                  <h4>Fix Conclusion:</h4>
                   <p>{solution.conclusion}</p>
                 </div>
                 <div>
-                  <h4>Solusi Fix:</h4>
+                  <h4>Fix Solution:</h4>
                   <p>{solution.solution}</p>
                 </div>
               </div>
@@ -387,10 +387,10 @@ const IssuesSection = ({ searchTerm }) => {
 
             {partialSolutions.map((solution, index) => (
               <div key={index} className="solution-item">
-                <h3>Penyelesaian {index + solutionData.length + 1}</h3>
+                <h3>Completion {index + solutionData.length + 1}</h3>
                 <hr />
                 <div>
-                  <h4>Fakta-fakta Permasalahan:</h4>
+                  <h4>Facts of the Problem:</h4>
                   <ul>
                     {solution.factsUnmatched.map((fact, idx) => (
                       <li key={idx}>{fact}</li>
@@ -398,17 +398,17 @@ const IssuesSection = ({ searchTerm }) => {
                   </ul>
                 </div>
                 <div>
-                  <h4>Kemungkinan Kesimpulan:</h4>
+                  <h4>Possible Conclusions:</h4>
                   <p>{solution.conclusion}</p>
                 </div>
                 <div>
-                  <h4>Kemungkinan Solusi:</h4>
+                  <h4>Possible Solutions:</h4>
                   <p>{solution.solution}</p>
                 </div>
                 <div>
                   <h4>
-                    Cek lagi fakta Permasalahan Berikut Agar Kesimpulan dan
-                    Solusinya Menjadi Fix:
+                    Check the following problem facts in order to make the
+                    conclusions and solutions fixed:
                   </h4>
                   <ul>
                     {solution.factsMatched.map((fact, idx) => (

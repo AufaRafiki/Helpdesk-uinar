@@ -1,19 +1,19 @@
 // src/App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./admin/pages/Login";
-import LoginMahasiswa from "./students/pages/LoginMahasiswa";
-import RegisterMahasiswa from "./students/pages/RegisterMahasiswa";
-import Register from "./admin/pages/Register";
-import Dashboard from "./admin/pages/Dashboard";
-import FaktaPermasalahan from "./admin/pages/FaktaPermasalahan";
-import Kesimpulan from "./admin/pages/Kesimpulan";
-import Solusi from "./admin/pages/Solusi";
-import Layout from "./admin/components/Layout";
-import PrivateRoute from "./admin/components/PrivateRoute";
-import StudentDashboard from "./students/pages/StudentDashboard";
-import About from "./students/pages/About";
-import NotifikasiAdmin from "./admin/pages/NotifikasiAdmin";
+import LoginMahasiswa from "./students/LoginMahasiswa";
+import RegisterMahasiswa from "./students/RegisterMahasiswa";
+import Logout from "./components/Logout";
+import Dashboard from "./admin/Dashboard";
+import FaktaPermasalahan from "./admin/FaktaPermasalahan";
+import Kesimpulan from "./admin/Kesimpulan";
+import Solusi from "./admin/Solusi";
+import Layout from "./components/Layout";
+import PrivateRoute from "./components/PrivateRoute";
+import StudentDashboard from "./students/StudentDashboard";
+import NotifikasiAdmin from "./admin/NotifikasiAdmin";
+import LoginAdmin from "./admin/LoginAdmin";
+import RegisterAdmin from "./admin/RegisterAdmin";
 
 const App = () => {
   return (
@@ -22,6 +22,7 @@ const App = () => {
         <Route path="/" element={<Navigate to="/dashboard" />} />
         <Route path="/login" element={<LoginMahasiswa />} />
         <Route path="/register" element={<RegisterMahasiswa />} />
+        <Route path="/logout" element={<Logout tujuan="/login" />} />
         {/* <Route
           path="/"
           element={<PrivateRoute component={Layout} navigateTo="/login" />}
@@ -36,20 +37,14 @@ const App = () => {
             />
           }
         />
-        <Route
-          path="/about"
-          element={
-            <PrivateRoute
-              component={About}
-              navigateTo="/login"
-              requiredRole="user"
-            />
-          }
-        />
 
         <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
-        <Route path="/admin/login" element={<Login />} />
-        <Route path="/admin/register" element={<Register />} />
+        <Route path="/admin/login" element={<LoginAdmin />} />
+        <Route path="/admin/register" element={<RegisterAdmin />} />
+        <Route
+          path="/admin/logout"
+          element={<Logout tujuan="/admin/login" />}
+        />
         <Route
           path="/admin/"
           element={

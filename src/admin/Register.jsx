@@ -6,7 +6,7 @@ import logo from "../../assets/logo-uinar.png";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles/Login.css";
 import { addDoc, collection } from "firebase/firestore";
-import { auth, db } from "../../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
 
 const Register = () => {
   const [nama, setNama] = useState("");

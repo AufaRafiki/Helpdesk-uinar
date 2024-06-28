@@ -14,7 +14,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: url("../../../assets/bg-login.jpeg") no-repeat center center fixed;
+  background: url("../../assets/bg-login.jpeg") no-repeat center center fixed;
   background-size: cover;
   position: relative; /* Agar lapisan hitam berada di atas background */
 }

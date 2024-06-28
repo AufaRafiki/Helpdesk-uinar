@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from "react";
-import { db } from "../../firebaseConfig"; // Import Firebase config
+import { db } from "../firebaseConfig"; // Import Firebase config
 import {
   collection,
   addDoc,
@@ -19,6 +19,7 @@ import {
   Tooltip,
   OverlayTrigger,
 } from "react-bootstrap";
+import ToastHelpdesk from "../components/ToastHelpdesk";
 import "./styles/Content.css"; // Add any additional styles you need for the dashboard
 
 const Dashboard = () => {
@@ -41,6 +42,13 @@ const Dashboard = () => {
   const [deleteId, setDeleteId] = useState(null);
   const editTooltipRef = useRef(null);
   const deleteTooltipRef = useRef(null);
+  const [toastShow, setToastShow] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setToastShow(true);
+  };
 
   const handleClose = () => {
     setShow(false);
@@ -157,13 +165,13 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = async (jenis) => {
     if (
       selectedFaktaIds.length === 0 ||
       !selectedKesimpulanId ||
       !selectedSolusiId
     ) {
-      setError("Semua kolom harus diisi.");
+      setError("All fields must be filled in.");
       return;
     }
 
@@ -189,9 +197,13 @@ const Dashboard = () => {
       // Refresh rules
       fetchRules();
       handleClose();
+      console.log(jenis);
+      jenis === 2
+        ? showToast("Rule successfully edited!")
+        : showToast("Rule successfully added!");
     } catch (e) {
       console.error("Error adding/updating document: ", e);
-      setError("Terjadi kesalahan saat menyimpan data.");
+      setError("Error occurred while saving data!");
     }
   };
 
@@ -215,9 +227,10 @@ const Dashboard = () => {
       const updatedRules = rules.filter((rule) => rule.id !== deleteId);
       setRules(updatedRules);
       handleDeleteClose();
+      showToast("Rule successfully deleted!");
     } catch (e) {
       console.error("Error deleting document: ", e);
-      setError("Terjadi kesalahan saat menghapus data.");
+      setError("Error occurred while deleting data!");
     }
   };
 
@@ -230,16 +243,16 @@ const Dashboard = () => {
       {loading ? (
         <p>Loading...</p>
       ) : rules.length === 0 ? (
-        <p>Tidak Ada Aturan</p>
+        <p>No Rule</p>
       ) : (
         <table className="table">
           <thead>
             <tr>
               <th className="col-rule">No Rule</th>
-              <th className="col-fakta">Fakta Permasalahan</th>
-              <th className="col-kesimpulan">Kesimpulan</th>
-              <th className="col-solusi">Solusi</th>
-              <th className="aksi">Aksi</th>
+              <th className="col-fakta">Fact of the Problem</th>
+              <th className="col-kesimpulan">Conclusion</th>
+              <th className="col-solusi">Solution</th>
+              <th className="aksi">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -326,13 +339,13 @@ const Dashboard = () => {
         </table>
       )}
       <Button variant="primary" onClick={handleShow} className="add-button">
-        Tambah Aturan
+        Add Rule
       </Button>
 
       {/* Add Rule Modal */}
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Tambah Aturan</Modal.Title>
+          <Modal.Title>Add Rule</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <RuleForm
@@ -356,10 +369,10 @@ const Dashboard = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
-            Batal
+            Cancel
           </Button>
-          <Button variant="primary" onClick={handleSave}>
-            Simpan
+          <Button variant="primary" onClick={() => handleSave(1)}>
+            Save
           </Button>
         </Modal.Footer>
       </Modal>
@@ -367,7 +380,7 @@ const Dashboard = () => {
       {/* Edit Rule Modal */}
       <Modal show={editShow} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit Aturan</Modal.Title>
+          <Modal.Title>Edit Rule</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <RuleForm
@@ -391,30 +404,37 @@ const Dashboard = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
-            Batal
+            Cancel
           </Button>
-          <Button variant="primary" onClick={handleSave}>
-            Simpan
+          <Button variant="primary" onClick={() => handleSave(2)}>
+            Save
           </Button>
         </Modal.Footer>
       </Modal>
 
       <Modal show={deleteShow} onHide={handleDeleteClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Konfirmasi Hapus</Modal.Title>
+          <Modal.Title>Delete Confirmation</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Apakah Anda yakin ingin menghapus aturan ini?</p>
+          <p>Are you sure you want to delete this rule?</p>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleDeleteClose}>
-            Batal
+            Cancel
           </Button>
           <Button variant="danger" onClick={confirmDelete}>
-            Hapus
+            Delete
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <ToastHelpdesk
+        show={toastShow}
+        message={toastMessage}
+        duration={3000}
+        onClose={() => setToastShow(false)}
+      />
     </div>
   );
 };
@@ -450,7 +470,7 @@ const RuleForm = ({
           aria-expanded={openFakta}
           className="mb-3 mt-3"
         >
-          Pilih Fakta Permasalahan
+          Select Facta of the Problem
           <span className="material-symbols-outlined">
             {openFakta ? "arrow_drop_down" : "arrow_right"}
           </span>
@@ -495,7 +515,7 @@ const RuleForm = ({
           aria-expanded={openKesimpulan}
           className="mb-3 mt-3"
         >
-          Pilih Kesimpulan
+          Select Conclusion
           <span className="material-symbols-outlined">
             {openKesimpulan ? "arrow_drop_down" : "arrow_right"}
           </span>
@@ -541,7 +561,7 @@ const RuleForm = ({
           aria-expanded={openSolusi}
           className="mb-3 mt-3"
         >
-          Pilih Solusi
+          Select Solution
           <span className="material-symbols-outlined">
             {openSolusi ? "arrow_drop_down" : "arrow_right"}
           </span>

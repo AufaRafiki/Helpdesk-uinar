@@ -82,8 +82,9 @@ button .menu-text {
   margin-top: 10px;
 }
 
-.logout button:hover {
+.logout:hover {
   background-color: red;
+  color: white;
   border: none;
 }
 

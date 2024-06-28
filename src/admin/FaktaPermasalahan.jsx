@@ -1,10 +1,9 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
-import { db } from "../../firebaseConfig"; // Import Firebase config
+import { db } from "../firebaseConfig"; // Import Firebase config
 import {
   collection,
   addDoc,
-  getDocs,
   deleteDoc,
   doc,
   updateDoc,
@@ -12,20 +11,22 @@ import {
   orderBy,
   where,
   arrayRemove,
+  onSnapshot,
+  getDocs,
 } from "firebase/firestore";
 import { Button } from "react-bootstrap";
 import ToastHelpdesk from "../components/ToastHelpdesk";
-import ModalHelpdesk from "../components/ModalHelpdesk";
 import TabelContentHelpdesk from "../components/TabelContentHelpdesk";
 import "./styles/Content.css";
+import ModalCRUD from "../components/ModalCRUD";
 
-const Solusi = () => {
+const FaktaPermasalahan = () => {
   const [show, setShow] = useState(false);
   const [editShow, setEditShow] = useState(false);
   const [deleteShow, setDeleteShow] = useState(false);
   const [nama, setNama] = useState("");
   const [editNama, setEditNama] = useState("");
-  const [solusi, setSolusi] = useState([]);
+  const [faktaPermasalahan, setFaktaPermasalahan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
@@ -66,26 +67,21 @@ const Solusi = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const trimmedNamaSolusi = nama.trim();
-    if (!trimmedNamaSolusi) {
-      setError("Nama Solusi tidak boleh hanya berisi spasi.");
+    const trimmedNamaFakta = nama.trim();
+    if (!trimmedNamaFakta) {
+      setError("The facta's name cannot consist only of spaces!");
       return;
     }
     try {
       const timestamp = new Date();
-      const docRef = await addDoc(collection(db, "solusi"), {
-        nama_solusi: trimmedNamaSolusi,
+      const docRef = await addDoc(collection(db, "fakta-permasalahan"), {
+        nama_fakta: trimmedNamaFakta,
         createdAt: timestamp,
         updatedAt: timestamp,
       });
-      setSolusi([
-        ...solusi,
-        { id: docRef.id, nama_solusi: trimmedNamaSolusi },
-      ]);
       setNama("");
-      fetchRules();
       handleClose();
-      showToast("Solusi berhasil ditambahkan!");
+      showToast("Fact added successfully!");
     } catch (e) {
       console.error("Error adding document: ", e);
     }
@@ -93,28 +89,20 @@ const Solusi = () => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const trimmedEditNamaSolusi = editNama.trim();
-    if (!trimmedEditNamaSolusi) {
-      setError("Nama Solusi tidak boleh hanya berisi spasi.");
+    const trimmedEditNamaFakta = editNama.trim();
+    if (!trimmedEditNamaFakta) {
+      setError("The facta's name cannot consist only of spaces!");
       return;
     }
     try {
       const timestamp = new Date();
-      const docRef = doc(db, "solusi", editId);
+      const docRef = doc(db, "fakta-permasalahan", editId);
       await updateDoc(docRef, {
-        nama_solusi: trimmedEditNamaSolusi,
+        nama_fakta: trimmedEditNamaFakta,
         updatedAt: timestamp,
       });
-      setSolusi(
-        solusi.map((solusiSatu) =>
-          solusiSatu.id === editId
-            ? { ...solusiSatu, nama_solusi: trimmedEditNamaSolusi }
-            : solusiSatu
-        )
-      );
-      setEditNama("");
       handleClose();
-      showToast("Solusi berhasil diedit!");
+      showToast("Fact successfully edited!");
     } catch (e) {
       console.error("Error editing document: ", e);
     }
@@ -123,50 +111,46 @@ const Solusi = () => {
   const confirmDelete = async () => {
     try {
       const rulesQuerySnapshot = await getDocs(
-        query(collection(db, "rules"), where("id_solusi", "==", deleteId))
+        query(
+          collection(db, "rules"),
+          where("id_fakta", "array-contains", deleteId)
+        )
       );
 
       const updatePromises = rulesQuerySnapshot.docs.map((ruleDoc) =>
         updateDoc(ruleDoc.ref, {
-          id_solusi: arrayRemove(deleteId),
+          id_fakta: arrayRemove(deleteId),
         })
       );
       await Promise.all(updatePromises);
 
-      await deleteDoc(doc(db, "solusi", deleteId));
-      setSolusi(solusi.filter((solusiSatu) => solusiSatu.id !== deleteId));
-
+      await deleteDoc(doc(db, "fakta-permasalahan", deleteId));
       handleClose();
-      showToast(`Solusi berhasil dihapus!`);
+      showToast(`Fact successfully deleted!`);
     } catch (e) {
       console.error("Error deleting document: ", e);
     }
   };
 
-  const fetchRules = async () => {
-    const querySnapshot4 = await getDocs(
-      query(collection(db, "solusi"), orderBy("createdAt", "asc"))
-    );
-    const data4 = querySnapshot4.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setSolusi(data4);
-  };
-
   useEffect(() => {
-    const fetchData = async () => {
-      const querySnapshot = await getDocs(collection(db, "solusi"));
-      const data = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setSolusi(data);
-      fetchRules();
-      setLoading(false);
+    const fetchFaktaPermasalahan = () => {
+      const q = query(
+        collection(db, "fakta-permasalahan"),
+        orderBy("createdAt", "asc")
+      );
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const data = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setFaktaPermasalahan(data);
+        setLoading(false);
+      });
+      return unsubscribe;
     };
 
-    fetchData();
+    const unsubscribe = fetchFaktaPermasalahan();
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -176,36 +160,36 @@ const Solusi = () => {
   }, [show, editShow]);
 
   return (
-    <div className="solusi">
+    <div className="fakta-permasalahan">
       <div className="content">
         <div className="header">
           <span className="material-symbols-outlined">report_problem</span>
-          <h1>Solusi</h1>
+          <h1>Fact of the Problem</h1>
         </div>
         {loading ? (
           <p>Loading...</p>
-        ) : solusi.length === 0 ? (
-          <p>Tidak Ada Solusi</p>
+        ) : faktaPermasalahan.length === 0 ? (
+          <p>No Facts of the Problem</p>
         ) : (
           <TabelContentHelpdesk
-            item="Solusi"
-            daftarData={solusi}
+            item="Facta"
+            daftarData={faktaPermasalahan}
             handleEditShow={handleEditShow}
             handleDeleteShow={handleDeleteShow}
           />
         )}
         <Button variant="primary" onClick={handleShow} className="add-button">
-          Tambah Solusi
+          Add Facts of the Problem
         </Button>
       </div>
 
-      <ModalHelpdesk
-        item="Solusi"
+      <ModalCRUD
+        item="Facta"
         show={show}
         handleClose={handleClose}
         handleSubmit={handleSubmit}
-        title="Tambah Solusi"
-        buttonLabel="Simpan"
+        title="Add Facts of the Problem"
+        buttonLabel="Save"
         nama={nama}
         setNama={setNama}
         error={error}
@@ -214,13 +198,13 @@ const Solusi = () => {
         type="add"
       />
 
-      <ModalHelpdesk
-        item="Solusi"
+      <ModalCRUD
+        item="Facta"
         show={editShow}
         handleClose={handleClose}
         handleSubmit={handleEditSubmit}
-        title="Edit Solusi"
-        buttonLabel="Simpan"
+        title="Edit Facts of the Problem"
+        buttonLabel="Save"
         nama={editNama}
         setNama={setEditNama}
         error={error}
@@ -229,13 +213,13 @@ const Solusi = () => {
         type="edit"
       />
 
-      <ModalHelpdesk
-        item="Solusi"
+      <ModalCRUD
+        item="Facta"
         show={deleteShow}
         handleClose={handleClose}
         handleSubmit={confirmDelete}
-        title="Konfirmasi Hapus"
-        buttonLabel="Hapus"
+        title="Delete Confirmation"
+        buttonLabel="Delete"
         type="delete"
       />
 
@@ -249,4 +233,4 @@ const Solusi = () => {
   );
 };
 
-export default Solusi;
+export default FaktaPermasalahan;

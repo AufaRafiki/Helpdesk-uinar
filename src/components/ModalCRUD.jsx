@@ -3,7 +3,7 @@
 import React from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 
-const ModalHelpdesk = ({
+const ModalCRUD = ({
   item,
   show,
   handleClose,
@@ -26,10 +26,10 @@ const ModalHelpdesk = ({
         {type !== "delete" ? (
           <Form onSubmit={handleSubmit}>
             <Form.Group controlId="formNamaFakta">
-              <Form.Label>{`Nama ${item}`}</Form.Label>
+              <Form.Label>{`Name of ${item}`}</Form.Label>
               <Form.Control
                 type="text"
-                placeholder={`Masukkan Nama ${item}`}
+                placeholder={`Enter the name of ${item}`}
                 value={nama}
                 ref={inputRef}
                 onChange={(e) => setNama(e.target.value)}
@@ -43,16 +43,16 @@ const ModalHelpdesk = ({
             </Button>
           </Form>
         ) : (
-          <p>{`Apakah Anda yakin ingin menghapus ${item} ini?`}</p>
+          <p>{`Are you sure you want to delete this ${item}?`}</p>
         )}
       </Modal.Body>
       {type === "delete" && (
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
-            Batal
+            Cancel
           </Button>
           <Button variant="danger" onClick={handleSubmit}>
-            Hapus
+            Delete
           </Button>
         </Modal.Footer>
       )}
@@ -60,4 +60,4 @@ const ModalHelpdesk = ({
   );
 };
 
-export default ModalHelpdesk;
+export default ModalCRUD;

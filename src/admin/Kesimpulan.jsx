@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
-import { db } from "../../firebaseConfig"; // Import Firebase config
+import { db } from "../firebaseConfig"; // Import Firebase config
 import {
   collection,
   addDoc,
@@ -15,7 +15,7 @@ import {
 } from "firebase/firestore";
 import { Button } from "react-bootstrap";
 import ToastHelpdesk from "../components/ToastHelpdesk";
-import ModalHelpdesk from "../components/ModalHelpdesk";
+import ModalCRUD from "../components/ModalCRUD";
 import TabelContentHelpdesk from "../components/TabelContentHelpdesk";
 import "./styles/Content.css";
 
@@ -68,7 +68,7 @@ const Kesimpulan = () => {
     e.preventDefault();
     const trimmedNamaKesimpulan = nama.trim();
     if (!trimmedNamaKesimpulan) {
-      setError("Nama Kesimpulan tidak boleh hanya berisi spasi.");
+      setError("The conclusion's name cannot consist only of spaces!");
       return;
     }
     try {
@@ -85,7 +85,7 @@ const Kesimpulan = () => {
       setNama("");
       fetchRules();
       handleClose();
-      showToast("Kesimpulan berhasil ditambahkan!");
+      showToast("Conclusion successfully added!");
     } catch (e) {
       console.error("Error adding document: ", e);
     }
@@ -95,7 +95,7 @@ const Kesimpulan = () => {
     e.preventDefault();
     const trimmedEditNamaKesimpulan = editNama.trim();
     if (!trimmedEditNamaKesimpulan) {
-      setError("Nama Kesimpulan tidak boleh hanya berisi spasi.");
+      setError("The conclusion's name cannot consist only of spaces!");
       return;
     }
     try {
@@ -114,7 +114,7 @@ const Kesimpulan = () => {
       );
       setEditNama("");
       handleClose();
-      showToast("Kesimpulan berhasil diedit!");
+      showToast("Conclusion successfully edited!");
     } catch (e) {
       console.error("Error editing document: ", e);
     }
@@ -137,7 +137,7 @@ const Kesimpulan = () => {
       setKesimpulan(kesimpulan.filter((simpulan) => simpulan.id !== deleteId));
 
       handleClose();
-      showToast(`Kesimpulan berhasil dihapus!`);
+      showToast(`Conclusion successfully deleted!`);
     } catch (e) {
       console.error("Error deleting document: ", e);
     }
@@ -180,32 +180,32 @@ const Kesimpulan = () => {
       <div className="content">
         <div className="header">
           <span className="material-symbols-outlined">report_problem</span>
-          <h1>Kesimpulan</h1>
+          <h1>Conclusion</h1>
         </div>
         {loading ? (
           <p>Loading...</p>
         ) : kesimpulan.length === 0 ? (
-          <p>Tidak Ada Kesimpulan</p>
+          <p>No Conclusions</p>
         ) : (
           <TabelContentHelpdesk
-            item="Kesimpulan"
+            item="Conclusion"
             daftarData={kesimpulan}
             handleEditShow={handleEditShow}
             handleDeleteShow={handleDeleteShow}
           />
         )}
         <Button variant="primary" onClick={handleShow} className="add-button">
-          Tambah Kesimpulan
+          Add Conclusion
         </Button>
       </div>
 
-      <ModalHelpdesk
-        item="Kesimpulan"
+      <ModalCRUD
+        item="Conclusion"
         show={show}
         handleClose={handleClose}
         handleSubmit={handleSubmit}
-        title="Tambah Kesimpulan"
-        buttonLabel="Simpan"
+        title="Add Conclusion"
+        buttonLabel="Save"
         nama={nama}
         setNama={setNama}
         error={error}
@@ -214,13 +214,13 @@ const Kesimpulan = () => {
         type="add"
       />
 
-      <ModalHelpdesk
-        item="Kesimpulan"
+      <ModalCRUD
+        item="Conclusion"
         show={editShow}
         handleClose={handleClose}
         handleSubmit={handleEditSubmit}
-        title="Edit Kesimpulan"
-        buttonLabel="Simpan"
+        title="Edit Conclusion"
+        buttonLabel="Save"
         nama={editNama}
         setNama={setEditNama}
         error={error}
@@ -229,13 +229,13 @@ const Kesimpulan = () => {
         type="edit"
       />
 
-      <ModalHelpdesk
-        item="Kesimpulan"
+      <ModalCRUD
+        item="Conclusion"
         show={deleteShow}
         handleClose={handleClose}
         handleSubmit={confirmDelete}
-        title="Konfirmasi Hapus"
-        buttonLabel="Hapus"
+        title="Delete Confirmation"
+        buttonLabel="Delete"
         type="delete"
       />
 
