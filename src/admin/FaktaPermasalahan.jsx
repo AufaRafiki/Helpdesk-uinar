@@ -179,7 +179,7 @@ const FaktaPermasalahan = () => {
           />
         )}
         <Button variant="primary" onClick={handleShow} className="add-button">
-          Add Facts of the Problem
+          Add Fact of the Problem
         </Button>
       </div>
 
