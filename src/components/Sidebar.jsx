@@ -1,8 +1,10 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import "./styles/Sidebar.css";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebaseConfig";
+import "./styles/Sidebar.css";
 
 const Sidebar = ({ onLogout, unreadCount }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -25,31 +27,25 @@ const Sidebar = ({ onLogout, unreadCount }) => {
   };
 
   useEffect(() => {
-    fetchNotifikasi();
-  }, []);
-
-  const getMenuItemClass = (path) => {
-    return location.pathname === path ? "menu-item active" : "menu-item";
-  };
-
-  const fetchNotifikasi = async () => {
-    try {
-      const pengajuanQuerySnapshot = await getDocs(collection(db, "pengajuan"));
-      const unreadCount = pengajuanQuerySnapshot.docs.filter(
+    const unsubscribe = onSnapshot(collection(db, "pengajuan"), (snapshot) => {
+      const unreadCount = snapshot.docs.filter(
         (doc) => !doc.data().isRead
       ).length;
-
       setTotalUnread(unreadCount);
-    } catch (error) {
-      console.error("Error fetching notifications: ", error);
-    }
-  };
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (unreadCount > 0) {
       setHasUpdated(true);
     }
   }, [unreadCount]);
+
+  const getMenuItemClass = (path) => {
+    return location.pathname === path ? "menu-item active" : "menu-item";
+  };
 
   return (
     <div
@@ -103,19 +99,12 @@ const Sidebar = ({ onLogout, unreadCount }) => {
         >
           <span className="material-symbols-outlined">notifications</span>
           <span className="menu-text">Notification</span>
-          {hasUpdated
-            ? unreadCount > 0 && (
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                  {unreadCount}
-                  <span className="visually-hidden">unread messages</span>
-                </span>
-              )
-            : totalUnread > 0 && (
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                  {totalUnread}
-                  <span className="visually-hidden">unread messages</span>
-                </span>
-              )}
+          {totalUnread > 0 && (
+            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {totalUnread}
+              <span className="visually-hidden">unread messages</span>
+            </span>
+          )}
         </Link>
         <Link
           onClick={handleLogout}

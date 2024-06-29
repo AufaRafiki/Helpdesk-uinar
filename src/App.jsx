@@ -23,10 +23,6 @@ const App = () => {
         <Route path="/login" element={<LoginMahasiswa />} />
         <Route path="/register" element={<RegisterMahasiswa />} />
         <Route path="/logout" element={<Logout tujuan="/login" />} />
-        {/* <Route
-          path="/"
-          element={<PrivateRoute component={Layout} navigateTo="/login" />}
-        ></Route> */}
         <Route
           path="/dashboard"
           element={
@@ -38,6 +34,7 @@ const App = () => {
           }
         />
 
+        <Route path="/admin/" element={<Navigate to="/admin/dashboard" />} />
         <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
         <Route path="/admin/login" element={<LoginAdmin />} />
         <Route path="/admin/register" element={<RegisterAdmin />} />
@@ -61,6 +58,9 @@ const App = () => {
           <Route path="solusi" element={<Solusi />} />
           <Route path="notifikasi" element={<NotifikasiAdmin />} />
         </Route>
+        {/* Catch-all route to redirect to /dashboard */}
+        <Route path="/admin/*" element={<Navigate to="/admin/dashboard" />} />
+        <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </BrowserRouter>
   );
