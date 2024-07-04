@@ -131,6 +131,7 @@ const IssuesSection = ({ searchTerm }) => {
   const [unmatchedFacts, setUnmatchedFacts] = useState([]);
   const [partialSolutions, setPartialSolutions] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [notFoundSolution, setNotFoundSolution] = useState(false);
 
   const handleShowModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
@@ -315,6 +316,7 @@ const IssuesSection = ({ searchTerm }) => {
     setUnmatchedFacts(unmatchedFactsList);
     setPartialSolutions(partialSolutionsFound);
     setIsLoading(false);
+    (solutionsFound.length == 0 && partialSolutionsFound.length == 0) ? (setNotFoundSolution(true)) : (setNotFoundSolution(false))
   };
 
   return (
@@ -428,7 +430,14 @@ const IssuesSection = ({ searchTerm }) => {
                 </div>
               </div>
             ))}
+
+            {}
           </div>
+        )}
+        {(notFoundSolution == true) && (
+          <div className="no-facts-message">
+          <p>No solution found matching the facts criteria.</p>
+        </div>
         )}
         <Button
           variant="link"
