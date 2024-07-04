@@ -1,16 +1,5 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from "react";
-import { db } from "../firebaseConfig"; // Import Firebase config
-import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  updateDoc,
-  query,
-  orderBy,
-} from "firebase/firestore";
 import {
   Modal,
   Button,
@@ -19,6 +8,15 @@ import {
   Tooltip,
   OverlayTrigger,
 } from "react-bootstrap";
+import { ambilSemuaFaktaPermasalahan } from "../database/faktaPermasalahanService";
+import { ambilSemuaSolusi } from "../database/solusiService";
+import { ambilSemuaKesimpulan } from "../database/kesimpulanService";
+import {
+  tambahRule,
+  editRule,
+  hapusRule,
+  ambilSemuaRules,
+} from "../database/rulesService";
 import ToastHelpdesk from "../components/ToastHelpdesk";
 import "./styles/Content.css"; // Add any additional styles you need for the dashboard
 
@@ -87,75 +85,33 @@ const Dashboard = () => {
   };
 
   const fetchRules = async () => {
-    const querySnapshot4 = await getDocs(
-      query(collection(db, "rules"), orderBy("createdAt", "asc"))
-    );
-    const data4 = querySnapshot4.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setRules(data4);
+    ambilSemuaRules((data) => {
+      setRules(data);
+    });
   };
 
   const fetchFakta = async () => {
-    const querySnapshot4 = await getDocs(
-      query(collection(db, "fakta-permasalahan"), orderBy("createdAt", "asc"))
-    );
-    const data4 = querySnapshot4.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setFaktaPermasalahan(data4);
+    ambilSemuaFaktaPermasalahan((data) => {
+      setFaktaPermasalahan(data);
+    });
   };
 
   const fetchKesimpulan = async () => {
-    const querySnapshot4 = await getDocs(
-      query(collection(db, "kesimpulan"), orderBy("createdAt", "asc"))
-    );
-    const data4 = querySnapshot4.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setKesimpulan(data4);
+    ambilSemuaKesimpulan((data) => {
+      setKesimpulan(data);
+    });
   };
 
   const fetchSolusi = async () => {
-    const querySnapshot4 = await getDocs(
-      query(collection(db, "solusi"), orderBy("createdAt", "asc"))
-    );
-    const data4 = querySnapshot4.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setSolusi(data4);
+    ambilSemuaSolusi((data) => {
+      setSolusi(data);
+    });
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      const querySnapshot1 = await getDocs(
-        collection(db, "fakta-permasalahan")
-      );
-      const data1 = querySnapshot1.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setFaktaPermasalahan(data1);
       fetchFakta();
-
-      const querySnapshot2 = await getDocs(collection(db, "kesimpulan"));
-      const data2 = querySnapshot2.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setKesimpulan(data2);
       fetchKesimpulan();
-
-      const querySnapshot3 = await getDocs(collection(db, "solusi"));
-      const data3 = querySnapshot3.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setSolusi(data3);
       fetchSolusi();
 
       fetchRules();
@@ -176,22 +132,16 @@ const Dashboard = () => {
     }
 
     try {
-      const timestamp = new Date();
+      const rule = {
+        id_fakta: selectedFaktaIds,
+        id_kesimpulan: selectedKesimpulanId,
+        id_solusi: selectedSolusiId,
+      };
+
       if (currentRuleId) {
-        await updateDoc(doc(db, "rules", currentRuleId), {
-          id_fakta: selectedFaktaIds,
-          id_kesimpulan: selectedKesimpulanId,
-          id_solusi: selectedSolusiId,
-          updatedAt: timestamp,
-        });
+        await editRule(currentRuleId, rule);
       } else {
-        await addDoc(collection(db, "rules"), {
-          id_fakta: selectedFaktaIds,
-          id_kesimpulan: selectedKesimpulanId,
-          id_solusi: selectedSolusiId,
-          createdAt: timestamp,
-          updatedAt: timestamp,
-        });
+        await tambahRule(rule);
       }
 
       // Refresh rules
@@ -223,7 +173,7 @@ const Dashboard = () => {
 
   const confirmDelete = async () => {
     try {
-      await deleteDoc(doc(db, "rules", deleteId));
+      await hapusRule(deleteId);
       const updatedRules = rules.filter((rule) => rule.id !== deleteId);
       setRules(updatedRules);
       handleDeleteClose();

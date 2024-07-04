@@ -1,18 +1,11 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
-import { db } from "../firebaseConfig"; // Import Firebase config
 import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  updateDoc,
-  query,
-  orderBy,
-  where,
-  arrayRemove,
-} from "firebase/firestore";
+  tambahKesimpulan,
+  editKesimpulan,
+  hapusKesimpulan,
+  ambilSemuaKesimpulan,
+} from "../database/kesimpulanService";
 import { Button } from "react-bootstrap";
 import ToastHelpdesk from "../components/ToastHelpdesk";
 import ModalCRUD from "../components/ModalCRUD";
@@ -33,8 +26,6 @@ const Kesimpulan = () => {
   const [toastShow, setToastShow] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const editTooltipRef = useRef(null);
-  const deleteTooltipRef = useRef(null);
   const inputRef = useRef(null);
 
   const showToast = (message) => {
@@ -72,18 +63,12 @@ const Kesimpulan = () => {
       return;
     }
     try {
-      const timestamp = new Date();
-      const docRef = await addDoc(collection(db, "kesimpulan"), {
-        nama_kesimpulan: trimmedNamaKesimpulan,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      });
+      const newId = await tambahKesimpulan(trimmedNamaKesimpulan);
       setKesimpulan([
         ...kesimpulan,
-        { id: docRef.id, nama_kesimpulan: trimmedNamaKesimpulan },
+        { id: newId, nama_kesimpulan: trimmedNamaKesimpulan },
       ]);
       setNama("");
-      fetchRules();
       handleClose();
       showToast("Conclusion successfully added!");
     } catch (e) {
@@ -99,12 +84,7 @@ const Kesimpulan = () => {
       return;
     }
     try {
-      const timestamp = new Date();
-      const docRef = doc(db, "kesimpulan", editId);
-      await updateDoc(docRef, {
-        nama_kesimpulan: trimmedEditNamaKesimpulan,
-        updatedAt: timestamp,
-      });
+      await editKesimpulan(editId, trimmedEditNamaKesimpulan);
       setKesimpulan(
         kesimpulan.map((simpulan) =>
           simpulan.id === editId
@@ -122,20 +102,8 @@ const Kesimpulan = () => {
 
   const confirmDelete = async () => {
     try {
-      const rulesQuerySnapshot = await getDocs(
-        query(collection(db, "rules"), where("id_kesimpulan", "==", deleteId))
-      );
-
-      const updatePromises = rulesQuerySnapshot.docs.map((ruleDoc) =>
-        updateDoc(ruleDoc.ref, {
-          id_kesimpulan: arrayRemove(deleteId),
-        })
-      );
-      await Promise.all(updatePromises);
-
-      await deleteDoc(doc(db, "kesimpulan", deleteId));
+      await hapusKesimpulan(deleteId);
       setKesimpulan(kesimpulan.filter((simpulan) => simpulan.id !== deleteId));
-
       handleClose();
       showToast(`Conclusion successfully deleted!`);
     } catch (e) {
@@ -143,30 +111,12 @@ const Kesimpulan = () => {
     }
   };
 
-  const fetchRules = async () => {
-    const querySnapshot4 = await getDocs(
-      query(collection(db, "kesimpulan"), orderBy("createdAt", "asc"))
-    );
-    const data4 = querySnapshot4.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setKesimpulan(data4);
-  };
-
   useEffect(() => {
-    const fetchData = async () => {
-      const querySnapshot = await getDocs(collection(db, "kesimpulan"));
-      const data = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+    const unsubscribe = ambilSemuaKesimpulan((data) => {
       setKesimpulan(data);
-      fetchRules();
       setLoading(false);
-    };
-
-    fetchData();
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

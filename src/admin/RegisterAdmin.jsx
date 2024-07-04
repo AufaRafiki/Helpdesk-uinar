@@ -14,7 +14,6 @@ const RegisterAdmin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State untuk melacak apakah password ditampilkan atau tidak
 
   const handleRegister = (e) => {
     e.preventDefault();

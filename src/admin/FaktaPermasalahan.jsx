@@ -1,19 +1,10 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
-import { db } from "../firebaseConfig"; // Import Firebase config
 import {
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
-  query,
-  orderBy,
-  where,
-  arrayRemove,
-  onSnapshot,
-  getDocs,
-} from "firebase/firestore";
+  tambahFaktaPermasalahan,
+  editFaktaPermasalahan,
+  hapusFaktaPermasalahan,
+  ambilSemuaFaktaPermasalahan,
+} from "../database/faktaPermasalahanService";
 import { Button } from "react-bootstrap";
 import ToastHelpdesk from "../components/ToastHelpdesk";
 import TabelContentHelpdesk from "../components/TabelContentHelpdesk";
@@ -34,8 +25,6 @@ const FaktaPermasalahan = () => {
   const [toastShow, setToastShow] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const editTooltipRef = useRef(null);
-  const deleteTooltipRef = useRef(null);
   const inputRef = useRef(null);
 
   const showToast = (message) => {
@@ -73,12 +62,7 @@ const FaktaPermasalahan = () => {
       return;
     }
     try {
-      const timestamp = new Date();
-      const docRef = await addDoc(collection(db, "fakta-permasalahan"), {
-        nama_fakta: trimmedNamaFakta,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      });
+      await tambahFaktaPermasalahan(trimmedNamaFakta);
       setNama("");
       handleClose();
       showToast("Fact added successfully!");
@@ -95,12 +79,7 @@ const FaktaPermasalahan = () => {
       return;
     }
     try {
-      const timestamp = new Date();
-      const docRef = doc(db, "fakta-permasalahan", editId);
-      await updateDoc(docRef, {
-        nama_fakta: trimmedEditNamaFakta,
-        updatedAt: timestamp,
-      });
+      await editFaktaPermasalahan(editId, trimmedEditNamaFakta);
       handleClose();
       showToast("Fact successfully edited!");
     } catch (e) {
@@ -110,21 +89,7 @@ const FaktaPermasalahan = () => {
 
   const confirmDelete = async () => {
     try {
-      const rulesQuerySnapshot = await getDocs(
-        query(
-          collection(db, "rules"),
-          where("id_fakta", "array-contains", deleteId)
-        )
-      );
-
-      const updatePromises = rulesQuerySnapshot.docs.map((ruleDoc) =>
-        updateDoc(ruleDoc.ref, {
-          id_fakta: arrayRemove(deleteId),
-        })
-      );
-      await Promise.all(updatePromises);
-
-      await deleteDoc(doc(db, "fakta-permasalahan", deleteId));
+      await hapusFaktaPermasalahan(deleteId);
       handleClose();
       showToast(`Fact successfully deleted!`);
     } catch (e) {
@@ -133,23 +98,10 @@ const FaktaPermasalahan = () => {
   };
 
   useEffect(() => {
-    const fetchFaktaPermasalahan = () => {
-      const q = query(
-        collection(db, "fakta-permasalahan"),
-        orderBy("createdAt", "asc")
-      );
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setFaktaPermasalahan(data);
-        setLoading(false);
-      });
-      return unsubscribe;
-    };
-
-    const unsubscribe = fetchFaktaPermasalahan();
+    const unsubscribe = ambilSemuaFaktaPermasalahan((data) => {
+      setFaktaPermasalahan(data);
+      setLoading(false);
+    });
     return () => unsubscribe();
   }, []);
 

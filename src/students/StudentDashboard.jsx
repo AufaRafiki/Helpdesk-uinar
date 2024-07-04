@@ -6,8 +6,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock } from "@fortawesome/free-solid-svg-icons";
 import { useCookies } from "react-cookie";
 import {
-  Navbar,
-  Nav,
   Container,
   Form,
   InputGroup,
@@ -16,19 +14,13 @@ import {
   Modal,
 } from "react-bootstrap";
 import { Search } from "react-bootstrap-icons";
-import {
-  query,
-  orderBy,
-  collection,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import useAuth from "../auth.js";
-import { db } from "../firebaseConfig.js";
 import "./styles/StudentDashboard.css";
-import { useNavigate } from "react-router-dom";
 import StudentNavbar from "../components/StudentNavbar.jsx";
+import { ambilSemuaFaktaPermasalahan } from "../database/faktaPermasalahanService.js";
+import { ambilSemuaKesimpulan } from "../database/kesimpulanService.js";
+import { ambilSemuaSolusi } from "../database/solusiService.js";
+import { tambahNotification } from "../database/notificationService.js";
+import { ambilSemuaRules } from "../database/rulesService.js";
 
 // HelpSection Component
 const HelpSection = ({ onSearch }) => {
@@ -83,14 +75,11 @@ const SubmitIssueForm = ({ show, handleClose }) => {
     setIsSubmitting(true);
     try {
       console.log(cookies);
-      await addDoc(collection(db, "pengajuan"), {
-        description: issueDescription,
-        createdAt: serverTimestamp(),
-        handledAt: null,
-        pengusul: cookies.user ? cookies.user.uid : null,
-        status: null,
-        isRead: false,
-      });
+      await tambahNotification(
+        issueDescription,
+        cookies.user ? cookies.user.uid : null
+      );
+
       setIssueDescription("");
       handleClose();
     } catch (error) {
@@ -159,15 +148,16 @@ const IssuesSection = ({ searchTerm }) => {
 
   useEffect(() => {
     const fetchFacts = async () => {
-      const factsQuery = query(
-        collection(db, "fakta-permasalahan"),
-        orderBy("createdAt", "asc")
-      );
-      const querySnapshot = await getDocs(factsQuery);
       const factsData = [];
-      querySnapshot.forEach((doc) => {
-        factsData.push({ ...doc.data(), id: doc.id });
+      await new Promise((resolve) => {
+        ambilSemuaFaktaPermasalahan((faktaData) => {
+          faktaData.forEach((doc) => {
+            factsData.push(doc);
+          });
+          resolve();
+        });
       });
+
       setFacts(factsData);
       setFilteredFacts(factsData);
     };
@@ -197,11 +187,14 @@ const IssuesSection = ({ searchTerm }) => {
 
   const handleFindSolution = async () => {
     setIsLoading(true);
-    const rulesQuery = query(collection(db, "rules"));
-    const querySnapshot = await getDocs(rulesQuery);
     const rulesData = [];
-    querySnapshot.forEach((doc) => {
-      rulesData.push({ ...doc.data(), id: doc.id });
+    await new Promise((resolve) => {
+      ambilSemuaRules((rules) => {
+        rules.forEach((doc) => {
+          rulesData.push(doc);
+        });
+        resolve();
+      });
     });
 
     const solutionsFound = [];
@@ -212,32 +205,38 @@ const IssuesSection = ({ searchTerm }) => {
 
       if (id_fakta.every((fact) => selectedFacts.includes(fact))) {
         const daftarFakta = [];
-        const faktaSnapshot = await getDocs(
-          collection(db, "fakta-permasalahan")
-        );
-        id_fakta.forEach((fakta) => {
-          faktaSnapshot.forEach((doc) => {
-            if (doc.id === fakta) {
-              daftarFakta.push(doc.data().nama_fakta);
-              matchedFactIds.add(fakta);
-            }
+
+        await ambilSemuaFaktaPermasalahan((faktaData) => {
+          id_fakta.forEach((fakta) => {
+            faktaData.forEach((doc) => {
+              if (doc.id === fakta) {
+                daftarFakta.push(doc.nama_fakta);
+                matchedFactIds.add(fakta);
+              }
+            });
           });
         });
 
         let conclusionText = "";
-        const conclusionSnapshot = await getDocs(collection(db, "kesimpulan"));
-        conclusionSnapshot.forEach((doc) => {
-          if (doc.id === id_kesimpulan) {
-            conclusionText = doc.data().nama_kesimpulan;
-          }
+        await ambilSemuaKesimpulan((kesimpulanData) => {
+          console.log(kesimpulanData);
+          kesimpulanData.forEach((satuKesimpulan) => {
+            if (satuKesimpulan.id === id_kesimpulan) {
+              conclusionText = satuKesimpulan.nama_kesimpulan;
+            }
+          });
         });
 
         let solutionText = "";
-        const solutionSnapshot = await getDocs(collection(db, "solusi"));
-        solutionSnapshot.forEach((doc) => {
-          if (doc.id === id_solusi) {
-            solutionText = doc.data().nama_solusi;
-          }
+        await new Promise((resolve) => {
+          ambilSemuaSolusi((solusiData) => {
+            solusiData.forEach((satuSolusi) => {
+              if (satuSolusi.id === id_solusi) {
+                solutionText = satuSolusi.nama_solusi;
+              }
+            });
+            resolve();
+          });
         });
 
         solutionsFound.push({
@@ -264,38 +263,43 @@ const IssuesSection = ({ searchTerm }) => {
       if (intersectingFacts.length > 0) {
         const daftarFaktaUnmatched = [];
         const daftarFaktaMatched = [];
-        const faktaSnapshot = await getDocs(
-          collection(db, "fakta-permasalahan")
-        );
-        id_fakta.forEach((fakta) => {
-          faktaSnapshot.forEach((doc) => {
-            if (doc.id === fakta) {
-              if (unmatchedFactsList.includes(fakta)) {
-                daftarFaktaUnmatched.push(doc.data().nama_fakta);
-              } else {
-                daftarFaktaMatched.push({
-                  nama: doc.data().nama_fakta,
-                  id: doc.id,
-                });
+
+        ambilSemuaFaktaPermasalahan((rules) => {
+          id_fakta.forEach((fakta) => {
+            rules.forEach((doc) => {
+              if (doc.id === fakta) {
+                if (unmatchedFactsList.includes(fakta)) {
+                  daftarFaktaUnmatched.push(doc.nama_fakta);
+                } else {
+                  daftarFaktaMatched.push({
+                    nama: doc.nama_fakta,
+                    id: doc.id,
+                  });
+                }
               }
-            }
+            });
           });
         });
 
         let conclusionText = "";
-        const conclusionSnapshot = await getDocs(collection(db, "kesimpulan"));
-        conclusionSnapshot.forEach((doc) => {
-          if (doc.id === id_kesimpulan) {
-            conclusionText = doc.data().nama_kesimpulan;
-          }
+        await ambilSemuaKesimpulan((kesimpulanData) => {
+          kesimpulanData.forEach((satuKesimpulan) => {
+            if (satuKesimpulan.id === id_kesimpulan) {
+              conclusionText = satuKesimpulan.nama_kesimpulan;
+            }
+          });
         });
 
         let solutionText = "";
-        const solutionSnapshot = await getDocs(collection(db, "solusi"));
-        solutionSnapshot.forEach((doc) => {
-          if (doc.id === id_solusi) {
-            solutionText = doc.data().nama_solusi;
-          }
+        await new Promise((resolve) => {
+          ambilSemuaSolusi((solusiData) => {
+            solusiData.forEach((satuSolusi) => {
+              if (satuSolusi.id === id_solusi) {
+                solutionText = satuSolusi.nama_solusi;
+              }
+            });
+            resolve();
+          });
         });
 
         partialSolutionsFound.push({
@@ -310,7 +314,6 @@ const IssuesSection = ({ searchTerm }) => {
     setSolutionData(solutionsFound);
     setUnmatchedFacts(unmatchedFactsList);
     setPartialSolutions(partialSolutionsFound);
-    console.log(partialSolutions);
     setIsLoading(false);
   };
 

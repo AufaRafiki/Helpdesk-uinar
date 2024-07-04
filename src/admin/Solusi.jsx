@@ -1,18 +1,11 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
-import { db } from "../firebaseConfig"; // Import Firebase config
 import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  updateDoc,
-  query,
-  orderBy,
-  where,
-  arrayRemove,
-} from "firebase/firestore";
+  tambahSolusi,
+  editSolusi,
+  hapusSolusi,
+  ambilSemuaSolusi,
+} from "../database/solusiService";
 import { Button } from "react-bootstrap";
 import ToastHelpdesk from "../components/ToastHelpdesk";
 import TabelContentHelpdesk from "../components/TabelContentHelpdesk";
@@ -33,8 +26,6 @@ const Solusi = () => {
   const [toastShow, setToastShow] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const editTooltipRef = useRef(null);
-  const deleteTooltipRef = useRef(null);
   const inputRef = useRef(null);
 
   const showToast = (message) => {
@@ -72,15 +63,9 @@ const Solusi = () => {
       return;
     }
     try {
-      const timestamp = new Date();
-      const docRef = await addDoc(collection(db, "solusi"), {
-        nama_solusi: trimmedNamaSolusi,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      });
-      setSolusi([...solusi, { id: docRef.id, nama_solusi: trimmedNamaSolusi }]);
+      const newId = await tambahSolusi(trimmedNamaSolusi);
+      setSolusi([...solusi, { id: newId, nama_solusi: trimmedNamaSolusi }]);
       setNama("");
-      fetchRules();
       handleClose();
       showToast("Solution successfully added!");
     } catch (e) {
@@ -96,12 +81,7 @@ const Solusi = () => {
       return;
     }
     try {
-      const timestamp = new Date();
-      const docRef = doc(db, "solusi", editId);
-      await updateDoc(docRef, {
-        nama_solusi: trimmedEditNamaSolusi,
-        updatedAt: timestamp,
-      });
+      await editSolusi(editId, trimmedEditNamaSolusi);
       setSolusi(
         solusi.map((solusiSatu) =>
           solusiSatu.id === editId
@@ -119,20 +99,8 @@ const Solusi = () => {
 
   const confirmDelete = async () => {
     try {
-      const rulesQuerySnapshot = await getDocs(
-        query(collection(db, "rules"), where("id_solusi", "==", deleteId))
-      );
-
-      const updatePromises = rulesQuerySnapshot.docs.map((ruleDoc) =>
-        updateDoc(ruleDoc.ref, {
-          id_solusi: arrayRemove(deleteId),
-        })
-      );
-      await Promise.all(updatePromises);
-
-      await deleteDoc(doc(db, "solusi", deleteId));
+      await hapusSolusi(deleteId);
       setSolusi(solusi.filter((solusiSatu) => solusiSatu.id !== deleteId));
-
       handleClose();
       showToast("Solution successfully deleted!");
     } catch (e) {
@@ -140,30 +108,12 @@ const Solusi = () => {
     }
   };
 
-  const fetchRules = async () => {
-    const querySnapshot4 = await getDocs(
-      query(collection(db, "solusi"), orderBy("createdAt", "asc"))
-    );
-    const data4 = querySnapshot4.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setSolusi(data4);
-  };
-
   useEffect(() => {
-    const fetchData = async () => {
-      const querySnapshot = await getDocs(collection(db, "solusi"));
-      const data = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+    const unsubscribe = ambilSemuaSolusi((data) => {
       setSolusi(data);
-      fetchRules();
       setLoading(false);
-    };
-
-    fetchData();
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

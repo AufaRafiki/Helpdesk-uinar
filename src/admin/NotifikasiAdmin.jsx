@@ -1,22 +1,15 @@
-/* eslint-disable no-unused-vars */
+// src/pages/NotifikasiAdmin.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { db } from "../firebaseConfig";
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
-  query,
-  orderBy,
-  serverTimestamp,
-  onSnapshot,
-  getDocs,
-} from "firebase/firestore";
 import { Button, Tooltip, OverlayTrigger } from "react-bootstrap";
 import { useOutletContext } from "react-router-dom";
 import ModalCRUD from "../components/ModalCRUD";
 import ToastHelpdesk from "../components/ToastHelpdesk";
+import {
+  ambilSemuaNotifications,
+  tambahMenjadiFakta,
+  hapusNotification,
+  tandaiNotificationSebagaiDibaca,
+} from "../database/notificationService";
 import "./styles/NotifikasiAdmin.css";
 
 const NotifikasiAdmin = () => {
@@ -55,104 +48,34 @@ const NotifikasiAdmin = () => {
 
   const handleDelete = async () => {
     try {
-      await deleteDoc(doc(db, "pengajuan", selectedNotif.id));
-      setToastMessage(`Notification deleted successfully!`);
+      await hapusNotification(selectedNotif, setToastMessage, handleClose);
       setToastShow(true);
-      handleClose();
     } catch (e) {
-      console.error("Error deleting document: ", e);
+      setError("Error deleting notification.");
     }
   };
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
-    const trimmedDescription = description.trim();
-    if (!trimmedDescription) {
-      setError("Description cannot contain only spaces.");
-      return;
-    }
     try {
-      // Tambahkan fakta permasalahan baru
-      await addDoc(collection(db, "fakta-permasalahan"), {
-        nama_fakta: trimmedDescription,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      setToastMessage(`Fact added successfully: ${trimmedDescription}`);
-      setToastShow(true);
-
-      // Perbarui status notifikasi menjadi "handled" dan isRead menjadi true
-      if (selectedNotif) {
-        await updateDoc(doc(db, "pengajuan", selectedNotif.id), {
-          status: "handled",
-          isRead: true,
-        });
-      }
-      handleClose();
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
-  };
-
-  const fetchNotifikasi = () => {
-    const pengajuanQuery = query(
-      collection(db, "pengajuan"),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsubscribe = onSnapshot(pengajuanQuery, (querySnapshot) => {
-      const pengajuanData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      const usersQuerySnapshot = getDocs(collection(db, "users")).then(
-        (usersQuerySnapshot) => {
-          const usersData = usersQuerySnapshot.docs.reduce((acc, doc) => {
-            acc[doc.data().uid] = doc.data();
-            return acc;
-          }, {});
-          console.log(usersData);
-
-          const notifikasiData = pengajuanData.map((pengajuan) => {
-            const pengusulData = usersData[pengajuan.pengusul] || {};
-            return {
-              ...pengajuan,
-              pengusulNama: pengusulData.nama || "Unknown",
-              pengusulNpm: pengusulData.npm || "Unknown",
-            };
-          });
-
-          const sortedData = notifikasiData.sort((a, b) => {
-            if (a.isRead === b.isRead) {
-              return b.createdAt.seconds - a.createdAt.seconds;
-            }
-            return a.isRead ? 1 : -1;
-          });
-
-          setNotifikasi(sortedData);
-          setLoading(false);
-
-          const unreadCount = sortedData.filter(
-            (notif) => !notif.isRead
-          ).length;
-          updateUnreadCount(unreadCount);
-        }
+      await tambahMenjadiFakta(
+        description,
+        selectedNotif,
+        setToastMessage,
+        handleClose
       );
-    });
-
-    return unsubscribe;
+      setToastShow(true);
+    } catch (e) {
+      setError(e.message);
+    }
   };
 
   const markAsRead = async (id) => {
     try {
-      await updateDoc(doc(db, "pengajuan", id), {
-        isRead: true,
-      });
-      setToastMessage(`Notification marked as read successfully!`);
+      await tandaiNotificationSebagaiDibaca(id, setToastMessage);
       setToastShow(true);
     } catch (e) {
-      console.error("Error updating document: ", e);
+      setError("Error marking notification as read.");
     }
   };
 
@@ -179,7 +102,11 @@ const NotifikasiAdmin = () => {
   };
 
   useEffect(() => {
-    const unsubscribe = fetchNotifikasi();
+    const unsubscribe = ambilSemuaNotifications(
+      setNotifikasi,
+      setLoading,
+      updateUnreadCount
+    );
     return () => unsubscribe();
   }, []);
 
